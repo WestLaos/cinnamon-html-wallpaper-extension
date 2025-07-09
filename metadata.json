@@ -1,0 +1,11 @@
+{
+    "external-configuration-app": "~/src/main.py",
+    "uuid": "cinnamon-html-wallpaper-extension@laoswest", 
+    "name": "Cinnamon HTML Wallpaper Extension",
+    "description": "Cinnamon HTML Wallpaper Extension allows you to set a HTML file as your wallpaper. This allows you to create dynamic wallpapers using HTML, CSS, and JavaScript.",
+    "version": "1.0.0",
+    "cinnamon-version": [
+        "6.4.8"
+    ],
+    "url": "https://github.com/WestLaos/cinnamon-html-wallpaper-extension-laoswest.git"
+}

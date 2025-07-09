@@ -1,0 +1,10 @@
+{
+  "selected_wallpaper": {
+    "type": "generic",
+    "default": "test.html"
+  },
+  "frames_per_second": {
+    "type": "generic",
+    "default": 10
+  }
+}
