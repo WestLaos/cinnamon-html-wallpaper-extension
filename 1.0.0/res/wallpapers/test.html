@@ -20,15 +20,8 @@
         document.write("<br/>");
 
         // get hour value. 
-        let hours = myDate.getHours();
-        let ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        let minutes = myDate.getMinutes();
-        minutes = minutes < 10 ? '0' + minutes : minutes;
-        let myTime = hours + " " + ampm + " : " + minutes +
-            " : " + myDate.getMilliseconds();
-        document.write("\tCurrent time is : " + myTime); 
+        let myTime = myDate.getHours() + " : " + myDate.getMinutes()+ " : " + myDate.getSeconds() + " : " + myDate.getMilliseconds();
+        document.write("\tCurrent time is : " + myTime ); 
     </script>
 </body>
 
