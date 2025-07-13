@@ -12,6 +12,7 @@
 const Util = imports.misc.util;
 const Settings = imports.ui.settings;
 const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
 
 /******************** Variables ********************/
 
@@ -36,12 +37,6 @@ CinnamonHTMLWallpaperExtension.prototype = {
 		this.settings = new Settings.ExtensionSettings(this, uuid);
 		this.loop = new GLib.MainLoop(null, false);
 		this.loopEnabled = false;
-
-		this.sourceId = GLib.timeout_add(
-    		GLib.PRIORITY_DEFAULT,
-    		500, 
-    		() => this._loop()
-		);
 	},
 
 	bindSettings: function (ui_name, js_name, func = this.on_settings_changed) {
@@ -61,33 +56,45 @@ CinnamonHTMLWallpaperExtension.prototype = {
 			return GLib.SOURCE_REMOVE;
 		}
 		
-		try {
-			GLib.spawn_command_line_async("/usr/bin/env python3 " + PATH  + "/src/wallpaperUpdater.py");
-			
-			// This way of running the script is just for testing purposes.
-			// In production, you should use GLib.spawn_command_line_async or similar methods to
-			// let [res, out, err, status] = GLib.spawn_command_line_sync("/usr/bin/env python3 " + PATH  + "/src/wallpaperUpdater.py");
-			// if (res) {
-			// 	global.log("stdout: " + out.toString());
-			// 	if (err && err.length > 0) {
-			// 		global.log("stderr: " + err.toString());
-			// 	}
-			// } else {
-			// 	global.logError(`${NAME}: Failed to run wallpaper updater script`);
-			// }
-		} catch(e) {
-			global.logError(e, `${NAME}: Error running wallpaper updater script`);
-		}
+		global.log("Loop")
 
-		return GLib.SOURCE_CONTINUE;
+		try {
+        	let bus = Gio.DBus.session;
+        	let proxy = Gio.DBusProxy.new_sync(bus, Gio.DBusProxyFlags.NONE, null,
+				'org.cinnamon.HtmlWallpaperWindow', 	// bus name
+				'/org/cinnamon/HtmlWallpaperWindow', 	// object path
+				'org.cinnamon.HtmlWallpaperWindow', 	// interface name
+				null
+			);
+
+        	proxy.call_sync('Reload', null, Gio.DBusCallFlags.NONE, -1, null);
+		} catch (e) {
+        	global.logError(e, `${NAME}: Error calling wallpaper updater D-Bus service`);
+    	}
+
+		GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10000, () => this._loop());
+    	return GLib.SOURCE_REMOVE;
 	},
 
 	/**
 	 * Starts the main loop of the extension.
 	 */
 	enable: function () {
-		this.loopEnabled = true;
-		this.loop.runAsync();
+		try {
+			let venvPython = `${PATH.substring(0, PATH.lastIndexOf('/'))}/venv/bin/python3`;
+			let script = `${PATH}/src/htmlWallpaperWindow.py`;
+			let cmd = `${venvPython} ${script}`;
+			GLib.spawn_command_line_async(cmd);
+		} catch(e) {
+			global.logError(e, `${NAME}: Error running wallpaper updater script`);
+		}
+
+		// this.loopEnabled = true;
+		// GLib.timeout_add(
+    	// 	GLib.PRIORITY_DEFAULT,
+    	// 	10000, 
+    	// 	() => this._loop()
+		// );
 	},
 
 	/**
@@ -95,6 +102,19 @@ CinnamonHTMLWallpaperExtension.prototype = {
 	 */
 	disable: function () {
 		this.loopEnabled = false;
+
+		try {
+        	let bus = Gio.DBus.session;
+        	let proxy = Gio.DBusProxy.new_sync(bus, Gio.DBusProxyFlags.NONE, null,
+            	'org.cinnamon.HtmlWallpaperWindow',
+            	'/org/cinnamon/HtmlWallpaperWindow',
+            	'org.cinnamon.HtmlWallpaperWindow',
+            	null
+        	);
+        	proxy.call_sync('Quit', null, Gio.DBusCallFlags.NONE, -1, null);
+    	} catch (e) {
+        	global.logError(e, `${NAME}: Error calling Quit on wallpaper updater D-Bus service`);
+    	}
 	}
 }
 
